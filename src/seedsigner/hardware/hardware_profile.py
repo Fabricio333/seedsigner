@@ -22,31 +22,29 @@ if HARDWARE not in ALL_HARDWARE:
 if HARDWARE == HARDWARE__SPOTPEAR_GAME_154:
     # Spotpear/Zopsc "1.54inch LCD Mini Game Console" hat (ST7789V 240x240).
     # https://spotpear.com/wiki/Raspberry-Pi-Game-1.54inch-LCD-touchscreen-display-ST7789.html
-    # It has a d-pad plus A/B/X/Y, START/SELECT and TL/TR instead of a joystick
-    # and 3 side keys, so:
-    #   KEY_PRESS <- A        KEY1 (top) <- X    KEY2 (mid) <- Y    KEY3 (bottom) <- B
+    # Held landscape: 5-way joystick on the left; on the right, the column of
+    # buttons next to the screen (Y, X, SELECT) stands in for KEY1/2/3. The
+    # outer B/A, START and the L/R shoulders are left unused.
     BUTTON_PINS = dict(
         KEY_UP=36,      # BCM16
         KEY_DOWN=29,    # BCM5
         KEY_LEFT=31,    # BCM6
         KEY_RIGHT=33,   # BCM13
-        KEY_PRESS=40,   # BCM21 "A"
-        KEY1=10,        # BCM15 "X"
-        KEY2=32,        # BCM12 "Y"
-        KEY3=38,        # BCM20 "B"
+        KEY_PRESS=5,    # BCM3  joystick press
+        KEY1=32,        # BCM12 "Y"      (top)
+        KEY2=10,        # BCM15 "X"      (middle)
+        KEY3=37,        # BCM26 "SELECT" (bottom)
     )
 
-    # Extra physical buttons that behave as an existing logical key
-    BUTTON_ALIASES = dict(
-        KEY_PRESS=[35, 5],  # BCM19 "START", BCM3 "KEY PRESS"
-    )
+    BUTTON_ALIASES = {}
 
     LCD_DC_PIN = 15     # BCM22
     LCD_RST_PIN = 13    # BCM27
     LCD_BL_PIN = None   # backlight is hardwired on
 
-    # MADCTL: the vendor's fbtft overlay drives this panel at rotate=0
-    LCD_MADCTL = 0x00
+    # MADCTL: panel's native scan (0x00) is 90° CCW when held landscape; 0x70
+    # rotates it 90° CW (same as the Waveshare hat, and needs no GRAM offset)
+    LCD_MADCTL = 0x70
 
 else:
     # Waveshare 1.3inch LCD HAT (the original SeedSigner hardware)
