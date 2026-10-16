@@ -26,10 +26,11 @@ if HARDWARE == HARDWARE__SPOTPEAR_GAME_154:
     # buttons next to the screen (Y, X, SELECT) stands in for KEY1/2/3. The
     # outer B/A, START and the L/R shoulders are left unused.
     BUTTON_PINS = dict(
-        KEY_UP=36,      # BCM16
-        KEY_DOWN=29,    # BCM5
-        KEY_LEFT=31,    # BCM6
-        KEY_RIGHT=33,   # BCM13
+        # The stick is mounted 180° from the vendor's UP/DOWN/LEFT/RIGHT labels
+        KEY_UP=29,      # BCM5  (vendor "DOWN")
+        KEY_DOWN=36,    # BCM16 (vendor "UP")
+        KEY_LEFT=33,    # BCM13 (vendor "RIGHT")
+        KEY_RIGHT=31,   # BCM6  (vendor "LEFT")
         KEY_PRESS=5,    # BCM3  joystick press
         KEY1=32,        # BCM12 "Y"      (top)
         KEY2=10,        # BCM15 "X"      (middle)
