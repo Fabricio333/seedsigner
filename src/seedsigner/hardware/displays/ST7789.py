@@ -4,6 +4,7 @@ import time
 import array
 from dataclasses import dataclass
 
+from seedsigner.hardware import hardware_profile
 from seedsigner.hardware.displays.display_driver import BaseDisplayDriver
 
 
@@ -20,16 +21,17 @@ class ST7789(BaseDisplayDriver):
     """
     def __post_init__(self):
         #Initialize DC RST pin
-        self._dc = 22
-        self._rst = 13
-        self._bl = 18
+        self._dc = hardware_profile.LCD_DC_PIN
+        self._rst = hardware_profile.LCD_RST_PIN
+        self._bl = hardware_profile.LCD_BL_PIN
 
         GPIO.setmode(GPIO.BOARD)
         GPIO.setwarnings(False)
         GPIO.setup(self._dc,GPIO.OUT)
         GPIO.setup(self._rst,GPIO.OUT)
-        GPIO.setup(self._bl,GPIO.OUT)
-        GPIO.output(self._bl, GPIO.HIGH)
+        if self._bl is not None:
+            GPIO.setup(self._bl,GPIO.OUT)
+            GPIO.output(self._bl, GPIO.HIGH)
 
         #Initialize SPI
         self._spi = spidev.SpiDev(0, 0)
@@ -52,7 +54,7 @@ class ST7789(BaseDisplayDriver):
         self.reset()
 
         self.command(0x36)
-        self.data(0x70)                 #self.data(0x00)
+        self.data(hardware_profile.LCD_MADCTL)  # memory access control (scan direction / rotation)
 
         self.command(0x3A) 
         self.data(0x05)
