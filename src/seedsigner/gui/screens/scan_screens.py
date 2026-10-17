@@ -1,3 +1,4 @@
+import textwrap
 import time
 
 from dataclasses import dataclass
@@ -100,9 +101,18 @@ class ScanScreen(BaseScreen):
             progress_text_width = right - left
 
             num_frames = 0
+            started = time.time()
+            last_diag = 0
             while self.keep_running:
                 frame = self.camera.read_video_stream(as_image=True)
-                if frame is not None:
+                if frame is None:
+                    # TEMP camera diagnostics: say on screen why there's no preview
+                    now = time.time()
+                    if now - started > 2 and now - last_diag > 0.5:
+                        last_diag = now
+                        self._show_camera_diagnostics(now - started)
+                    time.sleep(0.05)
+                else:
                     num_frames += 1
                     
                     scan_text = None
@@ -216,10 +226,33 @@ class ScanScreen(BaseScreen):
                                     width=1,
                                 )
 
+                        # TEMP camera diagnostics: frame count + average brightness (0-255)
+                        lum = sum(frame.convert("L").resize((16, 16)).getdata()) // 256
+                        ImageDraw.Draw(frame).text((4, 4), f"f{num_frames} lum{lum}", fill="red", font=instructions_font)
+
                         self.renderer.show_image(frame, show_direct=True)
 
                 if self.camera._video_stream is None:
                     break
+
+
+        def _show_camera_diagnostics(self, waited):
+            stream = self.camera._video_stream
+            lines = ["CAMERA DEBUG", f"no frames after {int(waited)}s"]
+            if stream is None:
+                lines.append("stream: not started")
+            else:
+                lines.append(f"received: {stream.frames_received}")
+                lines.append("thread: " + ("stopped" if stream.is_stopped else "running"))
+                if stream.error:
+                    lines += textwrap.wrap(stream.error, 26)[:6]
+            img = Image.new("RGB", (self.renderer.canvas_width, self.renderer.canvas_height), "black")
+            draw = ImageDraw.Draw(img)
+            font = Fonts.get_font(GUIConstants.get_body_font_name(), 16)
+            for i, line in enumerate(lines):
+                draw.text((8, 8 + i * 22), line, fill="yellow" if i == 0 else "white", font=font)
+            with self.renderer.lock:
+                self.renderer.show_image(img, show_direct=True)
 
 
     def _run(self):

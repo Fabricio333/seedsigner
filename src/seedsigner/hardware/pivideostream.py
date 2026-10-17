@@ -25,20 +25,36 @@ class PiVideoStream:
 		self.should_stop = False
 		self.is_stopped = True
 
+		# Diagnostics: frames delivered by the camera, and why the capture
+		# thread died (it used to die silently, leaving a frozen scan screen)
+		self.frames_received = 0
+		self.error = None
+
 	def start(self):
 		# start the thread to read frames from the video stream
+		# Mark running *before* the thread starts: if capture fails immediately,
+		# the thread's is_stopped=True must not be overwritten (stop() would hang)
+		self.is_stopped = False
 		t = Thread(target=self.update, args=())
 		t.daemon = True
 		t.start()
-		self.is_stopped = False
 		return self
 
 	def update(self):
+		try:
+			self._capture_loop()
+		except Exception as e:
+			logger.exception("PiVideoStream: capture thread died")
+			self.error = f"{type(e).__name__}: {e}"
+			self.is_stopped = True
+
+	def _capture_loop(self):
 		# keep looping infinitely until the thread is stopped
 		for f in self.stream:
 			# grab the frame from the stream and clear the stream in
 			# preparation for the next frame
 			self.frame = f.array
+			self.frames_received += 1
 			self.rawCapture.truncate(0)
 
 			# if the thread indicator variable is set, stop the thread
